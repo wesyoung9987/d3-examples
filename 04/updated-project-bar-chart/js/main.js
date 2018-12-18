@@ -113,19 +113,6 @@ function update(data) {
     .attr('height', 0)
     .remove();
 
-  // UPDATE old elements present in new data.
-  rects.transition(t)
-    .attr('y', function(d) {
-      return y(d[value]);
-    })
-    .attr('x', function(d) {
-      return x(d.month);
-    })
-    .attr('width', x.bandwidth)
-    .attr('height', function(d) {
-      return height - y(d[value]);
-    });
-
   // ENTER new elements present in new data.
   rects.enter()
     .append('rect')
@@ -136,13 +123,19 @@ function update(data) {
       .attr('fill', 'green')
       .attr('y', y(0))
       .attr('height', 0)
-    .transition(t)
-      .attr('y', function(d) {
-        return y(d[value]);
-      })
-      .attr('height', function(d) {
-        return height - y(d[value]);
-      });
+      // AND UPDATE old elements present in new data.
+      .merge(rects)
+      .transition(t)
+        .attr('y', function(d) {
+          return y(d[value]);
+        })
+        .attr('height', function(d) {
+          return height - y(d[value]);
+        })
+        .attr('x', function(d) {
+          return x(d.month);
+        })
+        .attr('width', x.bandwidth);
 
   var label = flag ? 'Revenue' : 'Profit';
   yLabel.text(label);
