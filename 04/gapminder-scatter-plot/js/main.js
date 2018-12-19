@@ -5,6 +5,8 @@ var height = 600 - margin.top - margin.bottom;
 
 var t = d3.transition().duration(300);
 
+var index = 0;
+
 var g = d3.select('#chart-area')
   .append('svg')
   .attr('width', width + margin.left + margin.right)
@@ -68,7 +70,11 @@ d3.json("data/data.json").then(function(data){
 
   console.log(updatedData);
 
-  console.log(updatedData[0].countries);
+  d3.interval(function() {
+    index = index + 1;
+    update(updatedData[index].countries);
+  }, 500);
+
   update(updatedData[0].countries);
 });
 
@@ -80,7 +86,6 @@ function update(data) {
   var xAxisCall = d3.axisBottom(x)
     .tickValues([400, 4000, 40000])
     .tickFormat(function(d) {
-      console.log('d', d);
       return '$' + d;
     });
   xAccessGroup.transition(t).call(xAxisCall);
@@ -89,6 +94,8 @@ function update(data) {
     .data(data, function(d) {
       return d.year;
     });
+
+  circles.exit().remove();
   
   circles.enter()
     .append('circle')
@@ -101,5 +108,13 @@ function update(data) {
       })
       .attr('r', function(d) {
         return 5;
-      });
+      })
+      .merge(circles)
+      .transition(t)
+        .attr('cx', function(d) {
+          return x(d.income);
+        })
+        .attr('cy', function(d) {
+          return y(d.life_exp);
+        });
 }
