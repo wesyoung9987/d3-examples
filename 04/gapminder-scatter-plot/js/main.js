@@ -52,6 +52,12 @@ g.append('text')
   .attr('transform', 'rotate(-90)')
   .text('Life Expectancy (Years)');
 
+// Year Display
+var year = g.append('text')
+  .attr('x', width - 100)
+  .attr('y', height - 30)
+  .attr('font-size', '20px');
+
 d3.json("data/data.json").then(function(data){
 
   var updatedData = data.reduce(function(acc, curr) {
@@ -72,13 +78,16 @@ d3.json("data/data.json").then(function(data){
 
   d3.interval(function() {
     index = index + 1;
-    update(updatedData[index].countries);
+    if (!updatedData[index]) {
+      index = 0;
+    }
+    update(updatedData[index].countries, updatedData[index].year);
   }, 500);
 
-  update(updatedData[0].countries);
+  update(updatedData[0].countries, updatedData[0].year);
 });
 
-function update(data) {
+function update(data, currentYear) {
 
   var yAxisCall = d3.axisLeft(y)
   yAccessGroup.transition(t).call(yAxisCall);
@@ -92,29 +101,46 @@ function update(data) {
 
   var circles = g.selectAll('circle')
     .data(data, function(d) {
-      return d.year;
+      return d.country;
     });
 
   circles.exit().remove();
+
+  var rScale = d3.scaleLinear()
+    .domain([0, d3.max(data, function(d) {
+      return d.population;
+    })])
+    .range([5, 25]);
+
+  var cScale = d3.scaleOrdinal()
+    .domain(['africa', 'americas', 'asia', 'europe'])
+    .range(d3.schemeCategory10)
   
   circles.enter()
     .append('circle')
       .attr('cx', function(d) {
         return x(d.income);
       })
-      .attr('fill', 'red')
+      .attr('fill', function(d) {
+        return cScale(d.continent);
+      })
       .attr('cy', function(d) {
         return y(d.life_exp);
       })
       .attr('r', function(d) {
-        return 5;
+        return rScale(d.population);
       })
       .merge(circles)
       .transition(t)
+        .attr('r', function(d) {
+          return rScale(d.population);
+        })
         .attr('cx', function(d) {
           return x(d.income);
         })
         .attr('cy', function(d) {
           return y(d.life_exp);
         });
+
+  year.text(currentYear);
 }
